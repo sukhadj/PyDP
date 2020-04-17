@@ -24,37 +24,43 @@ using namespace py::literals;
 namespace dp = differential_privacy;
 
 // helper class for Algorithm, which is a templated class
-template <typename T>
-void declareAlgorithm(py::module& m, string const& suffix) {
-  py::class_<dp::Algorithm<T>> cls(m, ("Algorithm" + suffix).c_str());
-  cls.def(py::init<double>(), "epsilon"_a);
-}
+// template <typename T>
+// void declareAlgorithm(py::module& m, string const& suffix) {
+//   py::class_<dp::Algorithm<T>> cls(m, ("Algorithm" + suffix).c_str());
+//   cls.def(py::init<double>(), "epsilon"_a);
+// }
 
-template <typename T, class Algorithm, class Builder>
-void declareAlgorithmBuilder(py::module& m, string const& suffix) {
-  py::class_<dp::AlgorithmBuilder<T, Algorithm, Builder>> cls(
-      m, ("AlgorithmBuilder" + suffix).c_str());
-  cls.def("build", &dp::AlgorithmBuilder<T, Algorithm, Builder>::Build);
-}
+// template <typename T, class Algorithm, class Builder>
+// void declareAlgorithmBuilder(py::module& m, string const& suffix) {
+//   py::class_<dp::AlgorithmBuilder<T, Algorithm, Builder>> cls(
+//       m, ("AlgorithmBuilder" + suffix).c_str());
+//   cls.def("build", &dp::AlgorithmBuilder<T, Algorithm, Builder>::Build);
+//   cls.def("set_epsilon",&dp::AlgorithmBuilder<T, Algorithm, Builder>::SetEpsilon);
+// }
 
-template <typename T, class Algorithm, class Builder>
-void declareBoundedAlgorithmBuilder(py::module& m, string const& suffix) {
-  py::class_<dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>> cls(
-      m, ("BoundedAlgorithmBuilder" + suffix).c_str());
-  cls.def("set_lower",
-          &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::SetLower);
-  cls.def("set_upper",
-          &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::SetUpper);
-  cls.def("clear_bounds",
-          &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::ClearBounds);
-  // todo: SetApproxBounds produces a "std::__cxx11::string =
-  // std::__cxx11::basic_string<char>" issue on compile which is usually due to
-  // different compilers. We need to fix this, potentially with a custom cast?
-  // cls.def("set_approx_bounds", &dp::BoundedAlgorithmBuilder<T, Algorithm,
-  // Builder>::SetApproxBounds);
-  cls.def("build", &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::Build);
-}
+// // Bounded Algorithm
+// template <typename T, class Algorithm, class Builder>
+// void declareBoundedAlgorithmBuilder(py::module& m, string const& suffix) {
+//   py::class_<dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>> cls(
+//       m, ("BoundedAlgorithmBuilder" + suffix).c_str());
+//   cls.def("set_lower",
+//           &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::SetLower);
+//   cls.def("set_upper",
+//           &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::SetUpper);
+//   cls.def("clear_bounds",
+//           &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::ClearBounds);
+  
+//   // this is an optional function
+//   // todo: SetApproxBounds produces a "std::__cxx11::string =
+//   // std::__cxx11::basic_string<char>" issue on compile which is usually due to
+//   // different compilers. We need to fix this, potentially with a custom cast?
+//   // cls.def("set_approx_bounds", &dp::BoundedAlgorithmBuilder<T, Algorithm,
+//   // Builder>::SetApproxBounds);
+  
+//   // cls.def("build", &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::Build);
+// }
 
+// Bounded Sum
 template <typename T, typename std::enable_if<
                           std::is_integral<T>::value ||
                           std::is_floating_point<T>::value>::type* = nullptr>
@@ -64,6 +70,21 @@ void declareBoundedSum(py::module& m, string const& suffix) {
   bld.def(py::init<>());
 }
 
+template <typename T>
+dp::Output list_iterator(py::list l){
+  std::vector<T> vec;
+  for (auto i : l){
+    vec.push_back(i);
+  }
+  return &dp::BoundedMean<T>::Builder::AlgorithmBuilder::Result(vec.begin(), vec.end());
+}
+
+template <typename T, typename Y>
+dp::base::StatusOr<std::unique_ptr<Y>> entry_d(){
+  return &dp::BoundedMean<T>::Builder()::Build();
+}
+
+// Bounded Mean
 template <typename T, typename std::enable_if<
                           std::is_integral<T>::value ||
                           std::is_floating_point<T>::value>::type* = nullptr>
@@ -76,8 +97,12 @@ void declareBoundedMean(py::module& m, string const& suffix) {
   bld.def("set_lower", &dp::BoundedMean<T>::Builder::SetLower);
   bld.def("set_upper", &dp::BoundedMean<T>::Builder::SetUpper);
   bld.def("clear_bounds", &dp::BoundedMean<T>::Builder::ClearBounds);
-  bld.def("build", &dp::BoundedMean<T>::Builder::Build);
+  bld.def("build", &entry_d<T, dp::Algorithm<T>>); // this is breaking
+  cls.def("add_entry", &dp::BoundedMean<T>::AddEntry);
+  cls.def("result", &list_iterator<T>); // this is breaking
 }
+
+// Count
 // todo: make these generators work. refer to the statusor implementation for
 // inspiration
 // template<typename T>
@@ -106,11 +131,11 @@ void init_algorithms(py::module& m) {
 
   // declareAlgorithmBuilder<double, dp::BoundedSum,
 
-  declareBoundedSum<int>(m, "I");
-  declareBoundedAlgorithmBuilder<int, dp::BoundedSum<int>,
-                                 typename dp::BoundedSum<int>::Builder>(m, "I");
+  // declareBoundedSum<int>(m, "I");
+  // declareBoundedAlgorithmBuilder<int, dp::BoundedSum<int>,
+  //                                typename dp::BoundedSum<int>::Builder>(m, "I");
 
-  declareBoundedMean<int>(m, "Int");
+  declareBoundedMean<double>(m, "D");
   // declareBoundedAlgorithmBuilder<int,dp::BoundedMean<int>, typename
   // dp::BoundedMean<int>::Builder>(m,"II");
 }
