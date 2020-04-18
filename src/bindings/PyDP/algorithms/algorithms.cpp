@@ -49,14 +49,14 @@ namespace dp = differential_privacy;
 //           &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::SetUpper);
 //   cls.def("clear_bounds",
 //           &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::ClearBounds);
-  
+
 //   // this is an optional function
 //   // todo: SetApproxBounds produces a "std::__cxx11::string =
 //   // std::__cxx11::basic_string<char>" issue on compile which is usually due to
 //   // different compilers. We need to fix this, potentially with a custom cast?
 //   // cls.def("set_approx_bounds", &dp::BoundedAlgorithmBuilder<T, Algorithm,
 //   // Builder>::SetApproxBounds);
-  
+
 //   // cls.def("build", &dp::BoundedAlgorithmBuilder<T, Algorithm, Builder>::Build);
 // }
 
