@@ -74,14 +74,14 @@ template <typename T>
 dp::Output list_iterator(py::list l){
   std::vector<T> vec;
   for (auto i : l){
-    vec.push_back(i);
+    vec.push_back(i.cast<T>());
   }
-  return &dp::BoundedMean<T>::Builder::AlgorithmBuilder::Result(vec.begin(), vec.end());
+  return &dp::BoundedMean<T>::Result(vec.begin(), vec.end());
 }
 
 template <typename T, typename Y>
 dp::base::StatusOr<std::unique_ptr<Y>> entry_d(){
-  return &dp::BoundedMean<T>::Builder()::Build();
+  return &dp::BoundedMean<T>::Builder::Build();
 }
 
 // Bounded Mean
